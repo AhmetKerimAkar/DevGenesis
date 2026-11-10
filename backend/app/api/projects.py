@@ -3,7 +3,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.crud import project as project_crud
-from app.schemas.project import ProjectCardResponse, ProjectDetailResponse
+from app.schemas.project import (
+    CatalogFiltersResponse,
+    ProjectCardResponse,
+    ProjectDetailResponse,
+)
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
@@ -31,6 +35,21 @@ async def list_projects(
         db=db, difficulty=difficulty, domain=domain
     )
     return projects
+
+
+@router.get(
+    "/filters",
+    response_model=CatalogFiltersResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Katalog filtre seçeneklerini getir",
+)
+async def catalog_filters(db: AsyncSession = Depends(get_db)):
+    domains, difficulties, total_count = await project_crud.get_catalog_filters(db)
+    return {
+        "domains": domains,
+        "difficulties": difficulties,
+        "total_count": total_count,
+    }
 
 
 @router.get(

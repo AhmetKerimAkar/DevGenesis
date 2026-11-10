@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { fetchProjectBySlug } from "@/lib/api";
 import GenesisPromptBox from "@/components/GenesisPromptBox";
+import RetryButton from "@/components/RetryButton";
 
 interface ProjectDetailPageProps {
   params: { slug: string };
@@ -64,13 +65,34 @@ export default async function ProjectDetailPage({
   params,
   searchParams,
 }: ProjectDetailPageProps) {
-  const project = await fetchProjectBySlug(params.slug);
-  if (!project) notFound();
-
   const query = new URLSearchParams();
   if (searchParams.domain) query.set("domain", searchParams.domain);
   if (searchParams.difficulty) query.set("difficulty", searchParams.difficulty);
   const catalogHref = query.toString() ? `/?${query.toString()}` : "/";
+  let project;
+
+  try {
+    project = await fetchProjectBySlug(params.slug);
+  } catch {
+    return (
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div role="alert" className="rounded-xl border border-rose-500/40 bg-rose-950/20 p-6">
+          <h1 className="text-2xl font-bold text-rose-200">Proje rehberi yüklenemedi</h1>
+          <p className="mt-2 text-sm leading-relaxed text-rose-100/80">
+            Proje bilgilerine şu anda ulaşılamıyor. Lütfen tekrar deneyin veya kataloğa dönün.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <RetryButton />
+            <Link href={catalogHref} className="inline-flex items-center rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-100 hover:border-indigo-400 hover:text-indigo-300">
+              Kataloğa dön
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!project) notFound();
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">

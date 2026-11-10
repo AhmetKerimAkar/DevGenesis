@@ -1,0 +1,44 @@
+{
+  "slug": "distributed-lock",
+  "title": "ChronosLock: Dağıtık İşlem Kilidi ve Idempotency Motoru",
+  "short_description": "Çift ödemeleri ve yarış durumlarını önleyen, yüksek hacimli fintech işlemleri için dağıtık kilit ve idempotency motoru.",
+  "domains": ["Finansal Teknolojiler", "Backend"],
+  "difficulty": "İleri",
+  "target_audience": "Ödeme sistemlerinde güvenilirlik, eşzamanlılık ve veri tutarlılığı problemlerini çözmek isteyen Backend geliştiricileri ve dağıtık sistem mimarları.",
+  "why_build": "Aynı ödeme isteğinin ağ tekrarları, kullanıcı çift tıklaması veya paralel worker'lar nedeniyle iki kez işlenmesini engelleyen üretim seviyesi bir kontrol katmanı tasarlamayı öğretir.",
+  "environment": {
+    "os": "Linux veya macOS; Windows üzerinde WSL2 ve Docker Desktop",
+    "ide": "VS Code + GitHub Copilot + REST Client",
+    "docker": "Zorunlu: PostgreSQL, Redis ve ChronosLock API servislerini aynı Docker Compose ağı içinde çalıştırma"
+  },
+  "tech_stack_and_ai": {
+    "core_stack": ["Python 3.12", "FastAPI", "PostgreSQL", "Redis", "SQLAlchemy 2", "Docker Compose", "Pytest"],
+    "ai_division_of_labor": "Ödeme durum makinesini, kilit sahipliği ve timeout kurallarını SEN tasarla; Redis Lua script'lerini, SQLAlchemy repository katmanını, property-based testleri ve gözlemlenebilirlik metriklerini AI asistanına yazdır."
+  },
+  "prerequisites": [
+    "Transaction isolation seviyeleri, unique constraint ve PostgreSQL row locking mantığı",
+    "Redis TTL, SET NX ve dağıtık kilitlerin lease/ownership yaşam döngüsü",
+    "Asenkron Python, FastAPI dependency injection ve idempotent API tasarımı"
+  ],
+  "anti_patterns": [
+    "Kilit süresi dolduğunda eski worker'ın yeni sahibin işlemini serbest bırakabilmesini engelleyecek token doğrulaması yapmamak.",
+    "Idempotency anahtarını yalnızca uygulama belleğinde tutarak yatay ölçeklenen instance'lar arasında tutarsız sonuç üretmek.",
+    "Ödeme sağlayıcısına yapılan çağrı ile veritabanı commit'ini tek atomik işlem sanıp belirsiz ağ hatalarında çift tahsilat riskini göz ardı etmek."
+  ],
+  "genesis_prompt": "Rolün: Kıdemli Fintech ve Dağıtık Sistemler Mimarı.\n\nFastAPI, PostgreSQL ve Redis kullanarak ödeme işlemlerinde çift çalışmayı önleyen ChronosLock motorunu tasarlıyoruz.\n\nKurallar:\n1. Önce ödeme durum makinesini, idempotency anahtarının yaşam döngüsünü ve yeniden deneme politikasını açıkla.\n2. Redis kilidini SET NX ve benzersiz sahiplik token'ı ile kur; kilit bırakma işlemi token doğrulayan atomik Lua script'i ile yapılsın.\n3. PostgreSQL tarafında unique constraint ve transaction isolation ile son güvenlik katmanını göster.\n4. Ödeme sağlayıcısı belirsiz yanıt verdiğinde işlemi güvenle reconciliation kuyruğuna alan tasarım oluştur.\n5. Her kritik yarış durumu için eşzamanlı test senaryosu yaz.\n\nİlk adım olarak veri akışını, durum makinesini ve hata senaryolarını sun; onayımı bekle.",
+  "definition_of_done": [
+    "Aynı idempotency anahtarıyla 100 paralel istek gönderildiğinde yalnızca bir ödeme sağlayıcısı çağrısı yapılması ve tüm istemcilerin aynı sonuç referansını alması.",
+    "Kilit sahibi çöktüğünde lease timeout sonrasında yeni sahibin işlemi devralabilmesi; eski sahibin token doğrulaması olmadan kilidi bırakamaması.",
+    "Ödeme sağlayıcısının timeout ve belirsiz yanıt senaryolarında çift tahsilat oluşturmadan reconciliation kaydı ve izlenebilir audit çıktısı üretilmesi."
+  ],
+  "interview_questions": [
+    {
+      "question": "Redis dağıtık kilidi ödeme sisteminde neden tek başına yeterli güvence olarak kullanmadınız?",
+      "technical_defense": "Redis kilidi eşzamanlı yürütmeyi azaltır ancak kalıcı doğruluk garantisi değildir; lease süresi, saat/partition sorunları veya istemci çökmesi belirsizlik yaratabilir. Bu yüzden PostgreSQL unique constraint ve idempotency kaydı son doğruluk katmanı olarak kullanılır."
+    },
+    {
+      "question": "Ödeme sağlayıcısı timeout döndürdüğünde işlemi nasıl güvenle yeniden denersiniz?",
+      "technical_defense": "Timeout, işlemin gerçekleşmediğini kanıtlamaz. Aynı idempotency anahtarıyla sağlayıcının sorgulama veya idempotent retry mekanizması kullanılır; sonuç kesinleşene kadar işlem reconciliation durumunda tutulur ve yeni tahsilat körlemesine başlatılmaz."
+    }
+  ]
+}

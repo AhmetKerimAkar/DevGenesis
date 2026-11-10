@@ -64,6 +64,12 @@ class ProjectCardResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class CatalogFiltersResponse(BaseModel):
+    domains: list[str]
+    difficulties: list[str]
+    total_count: int
+
+
 class ProjectDetailResponse(ProjectBase):
     """Detay sayfası (/projects/[slug]) için tüm 9 sütunu içeren tam model."""
     id: int

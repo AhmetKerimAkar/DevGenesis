@@ -27,6 +27,12 @@ export interface ProjectCard {
   difficulty: string;
 }
 
+export interface CatalogFilters {
+  domains: string[];
+  difficulties: string[];
+  total_count: number;
+}
+
 /**
  * Detay Sayfası (/projects/[slug]) için 9 sütunlu tam mimari model
  * Backend karşılığı: ProjectDetailResponse

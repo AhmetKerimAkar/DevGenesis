@@ -30,7 +30,7 @@ export default function GenesisPromptBox({
   return (
     <section id="genesis-prompt" className="scroll-mt-24 rounded-xl border border-slate-700/60 bg-[#0f1420]/90 shadow-lg shadow-indigo-950/20 overflow-hidden">
       {/* Üst Başlık ve Kopyalama Butonu */}
-      <div className="flex items-center justify-between px-6 py-4 bg-[#0f1420]/90 border-b border-slate-700/60">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-4 bg-[#0f1420]/90 border-b border-slate-700/60">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-md bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300">
             <Sparkles className="w-4 h-4" />
@@ -45,12 +45,12 @@ export default function GenesisPromptBox({
           </div>
         </div>
 
-        <div className="flex shrink-0 flex-col items-end gap-2">
+        <div className="flex w-full sm:w-auto shrink-0 flex-col items-stretch sm:items-end gap-2">
           <button
             onClick={handleCopy}
             type="button"
             aria-label={`${projectTitle} Genesis Promptunu Kopyala`}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-xs font-medium transition-all border focus-visible:ring-2 focus-visible:ring-indigo-400 ${
+            className={`flex w-full sm:w-auto justify-center items-center gap-2 px-4 py-2 rounded-lg font-mono text-xs font-medium transition-all border focus-visible:ring-2 focus-visible:ring-indigo-400 ${
               copied
                 ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
                 : "bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-500 shadow-sm"
@@ -69,7 +69,7 @@ export default function GenesisPromptBox({
             )}
           </button>
           {copyError && (
-            <p aria-live="polite" className="max-w-xs text-right text-xs text-rose-300">
+            <p aria-live="polite" className="w-full text-xs text-amber-300 bg-amber-950/40 border border-amber-500/30 rounded-md px-3 py-2 mt-2">
               Kopyalanamadı, metni seçip kopyalayabilirsin
             </p>
           )}

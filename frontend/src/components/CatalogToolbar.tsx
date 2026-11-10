@@ -2,10 +2,15 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-const domains = ["Siber Güvenlik", "Backend", "Yapay Zeka"];
-const difficulties = ["Orta", "Orta-İleri"];
+interface CatalogToolbarProps {
+  domains: string[];
+  difficulties: string[];
+}
 
-export default function CatalogToolbar() {
+export default function CatalogToolbar({
+  domains,
+  difficulties,
+}: CatalogToolbarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

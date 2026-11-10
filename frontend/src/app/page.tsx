@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { fetchProjects } from "@/lib/api";
+import { fetchCatalogFilters, fetchProjects } from "@/lib/api";
 import CatalogToolbar from "@/components/CatalogToolbar";
 import RetryButton from "@/components/RetryButton";
 
@@ -19,7 +19,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   ).toString();
 
   try {
-    const projects = await fetchProjects(domain, difficulty);
+    const [projects, catalogFilters] = await Promise.all([
+      fetchProjects(domain, difficulty),
+      fetchCatalogFilters(),
+    ]);
 
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -32,11 +35,16 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           </p>
         </header>
 
-        <CatalogToolbar />
+        <CatalogToolbar
+          domains={catalogFilters.domains}
+          difficulties={catalogFilters.difficulties}
+        />
 
         <div className="mt-8 flex items-center justify-between border-b border-slate-700/70 pb-3">
           <h2 className="text-xl font-semibold text-slate-100">Proje kataloğu</h2>
-          <span className="text-xs text-slate-300">Toplam {projects.length} proje</span>
+          <span className="text-xs text-slate-300">
+            Filtreyle eşleşen {projects.length} / {catalogFilters.total_count} proje
+          </span>
         </div>
 
         {projects.length === 0 ? (

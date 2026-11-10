@@ -1,4 +1,4 @@
-import { ProjectCard, ProjectDetail } from "@/types/project";
+import { CatalogFilters, ProjectCard, ProjectDetail } from "@/types/project";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
@@ -21,6 +21,18 @@ export async function fetchProjects(
 
   if (!response.ok) {
     throw new Error(`Projeler yüklenemedi (HTTP ${response.status})`);
+  }
+
+  return response.json();
+}
+
+export async function fetchCatalogFilters(): Promise<CatalogFilters> {
+  const response = await fetch(`${API_BASE_URL}/projects/filters`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Katalog filtreleri yüklenemedi (HTTP ${response.status})`);
   }
 
   return response.json();
