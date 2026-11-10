@@ -28,7 +28,7 @@ export default function RootLayout({
       >
         {/* Masaüstü Üst Navigasyon Barı */}
         <header className="sticky top-0 z-40 border-b border-slate-700/70 bg-[#131824]/85 backdrop-blur-md">
-          <div className="max-w-7xl mx-auto px-8 h-16 flex items-center justify-between">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <Link
               href="/"
               className="flex items-center gap-3 group focus:outline-none"
@@ -47,7 +47,7 @@ export default function RootLayout({
             </Link>
 
             <div className="flex items-center gap-6 text-sm text-slate-400">
-              <div className="flex items-center gap-2 font-mono text-xs bg-slate-800/55 border border-slate-700/70 px-3 py-1.5 rounded-md text-slate-300">
+              <div className="hidden md:flex items-center gap-2 font-mono text-xs bg-slate-800/55 border border-slate-700/70 px-3 py-1.5 rounded-md text-slate-300">
                 <Layers className="w-3.5 h-3.5 text-indigo-400" />
                 <span>9-Sütunlu Mimari Standart</span>
               </div>
@@ -60,7 +60,7 @@ export default function RootLayout({
 
         {/* Alt Bilgi (Footer) */}
         <footer className="border-t border-slate-700/70 bg-[#131824] py-6 mt-20">
-          <div className="max-w-7xl mx-auto px-8 flex items-center justify-between text-xs text-slate-300 font-mono">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between text-xs text-slate-300 font-mono">
             <span>DevGenesis — Hazır kod değil, mimari sınırlar ve doğru başlangıç.</span>
             <span>FastAPI + Next.js 14 Production Stack</span>
           </div>
@@ -69,4 +69,3 @@ export default function RootLayout({
     </html>
   );
 }
-
