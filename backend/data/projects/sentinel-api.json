@@ -1,0 +1,44 @@
+{
+  "slug": "sentinel-api",
+  "title": "Sentinel API: Dağıtık Token Bucket Rate Limiter & Ters Proxy",
+  "short_description": "Yüksek trafikli mikroservisleri DDoS ve brute-force saldırılarından koruyan, Redis ve Lua tabanlı atomik hız sınırlama ağ geçidi.",
+  "domains": ["Siber Güvenlik", "Backend"],
+  "difficulty": "Orta",
+  "target_audience": "Basit CRUD API'leri yazmayı öğrenmiş ancak yüksek eşzamanlılık (concurrency), yarış durumları (race condition) ve API güvenliği mimarisine adım atmak isteyen Backend ve Siber Güvenlik odaklı geliştiriciler.",
+  "why_build": "Mülakatlarda 'API'nizi kötü niyetli trafikten nasıl korursunuz?' sorusuna 'hazır kütüphane kurarım' demek yerine; Redis üzerinde Lua script'leri ile ağ gecikmesini (network round-trip) tek adıma indiren atomik bir Token Bucket algoritması tasarladığınızı kanıtlar.",
+  "environment": {
+    "os": "Linux (WSL2 Ubuntu 22.04+) veya macOS; Windows üzerinde yerel Docker Engine",
+    "ide": "VS Code + GitHub Copilot + REST Client / Postman",
+    "docker": "Zorunlu: Redis 7 (Alpine) ve FastAPI servisini aynı sanal ağda koşturan docker-compose.yml"
+  },
+  "tech_stack_and_ai": {
+    "core_stack": ["Python 3.12", "FastAPI", "Redis (redis-py async)", "Lua Scripting", "Docker Compose", "Locust (Yük Testi)"],
+    "ai_division_of_labor": "Yarış durumu (race condition) yaratmayan mimari kararları, Redis anahtar yaşam döngüsünü (TTL) ve middleware akışını SEN kurgula; Lua script sözdizimini, HTTP 429 başlık formatlamalarını (Retry-After) ve Locust yük testi senaryolarını AI asistanına yazdır."
+  },
+  "prerequisites": [
+    "HTTP durum kodları (özellikle 429 Too Many Requests) ve özel yanıt başlıkları (X-RateLimit-Remaining)",
+    "Asenkron Python (async/await) ve FastAPI Middleware yaşam döngüsü",
+    "Temel Redis veri yapıları (Hash, String, EXPIRE) ve bellek içi (in-memory) çalışma mantığı"
+  ],
+  "anti_patterns": [
+    "Hız sınırlama sayaçlarını PostgreSQL gibi disk tabanlı ilişkisel veritabanında tutarak sistemi kendi elinle darboğaza sokmak.",
+    "Redis'ten değeri GET ile okuyup Python içinde hesaplayıp SET ile geri yazmak (Yüksek trafikte Time-of-Check to Time-of-Use yarış durumuna yol açar; işlem Redis içinde tek atomik Lua script'i ile yapılmalıdır).",
+    "Redis çöktüğünde tüm API trafiğini durdurmak yerine 'Fail-Open' veya 'Circuit Breaker' stratejisi kurgulamamak."
+  ],
+  "genesis_prompt": "Rolün: Kıdemli Dağıtık Sistemler ve API Güvenliği Mimarı.\nPython 3.12, FastAPI ve asenkron Redis kullanarak üretim standartlarında bir 'Token Bucket' Rate Limiter Middleware inşa ediyoruz.\n\nKurallar:\n1. Bana doğrudan tüm projeyi tek dosyada kodlama. Önce önerdiğin klasör yapısını ve Redis üzerinde çalışacak Lua script'inin matematiksel mantığını (kova kapasitesi, dolum hızı, geçen süre hesabı) açıkla.\n2. GET ve SET işlemlerini ayrı ayrı yapma; yarış durumunu (race condition) önlemek için hesaplamayı Redis içinde atomik olarak yapan bir Lua script'i tasarla.\n3. İstemciye her yanıtta X-RateLimit-Limit, X-RateLimit-Remaining ve X-RateLimit-Reset HTTP başlıklarını dönen mimariyi kur.\n4. Redis bağlantısı koptuğunda sistemin tamamen çökmesini engelleyen 'Fail-Open' (loglayarak geçişe izin verme) tasarımını göster.\n\nİlk adım olarak sadece klasör ağacını ve Token Bucket Lua algoritmasının tasarımını sun, onayımı bekle.",
+  "definition_of_done": [
+    "Locust veya k6 ile saniyede 500 eşzamanlı istek basıldığında bile Redis üzerinde yarış durumu (race condition) oluşmadan tam belirlenen limitte (ör. 100 istek/dk) 101. isteğin kesin olarak HTTP 429 alması.",
+    "Her HTTP yanıtında X-RateLimit-Limit, X-RateLimit-Remaining ve Retry-After başlıklarının milisaniye hassasiyetinde doğru dönmesi.",
+    "Docker üzerindeki Redis konteyneri bilerek durdurulduğunda (docker stop) API'nin 500 hatası verip çökmek yerine uyarı logu basarak 'Fail-Open' modunda çalışmaya devam etmesi."
+  ],
+  "interview_questions": [
+    {
+      "question": "Neden Fixed Window (Sabit Pencere) yerine Token Bucket algoritmasını tercih ettiniz ve Redis'te neden Lua kullandınız?",
+      "technical_defense": "Sabit Pencere algoritmasında dakika sınırlarının birleştiği anlarda (örneğin 00:59 ve 01:01) iki katı trafik geçişine izin veren 'boundary burst' zaafiyeti vardır. Token Bucket ise hem kontrollü anlık sıçramalara (burst) izin verir hem de uzun vadeli akışı sabitler. Python'dan GET yapıp sonra SET yapmak iki ayrı ağ yolculuğu ve yarış durumu yaratır; Lua script'i ise Redis'in tek iş parçacıklı (single-threaded) motorunda atomik olarak çalışır."
+    },
+    {
+      "question": "Kullanıcı IP'sine göre hız sınırlaması yaparken Kurumsal NAT veya Cloudflare arkasındaki kullanıcıları yanlışlıkla engellememek için ne yaptınız?",
+      "technical_defense": "Doğrudan soket IP'sine bakmak ters proxy veya CDN arkasında tüm trafiği tek IP gibi gösterir. Güvenilir proxy listesinden gelen X-Forwarded-For başlığını ayrıştırdık ve kimliği doğrulanmış (JWT) kullanıcılarda IP yerine doğrudan 'user_id + endpoint' kombinasyonunu Redis anahtarı olarak kullandık."
+    }
+  ]
+}

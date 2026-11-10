@@ -1,0 +1,44 @@
+{
+  "slug": "log-pulse",
+  "title": "LogPulse: Hibrit Log Anomali ve Siber Tehdit Tespit Motoru",
+  "short_description": "Yapılandırılmamış sunucu loglarını gerçek zamanlı ayrıştıran, kural tabanlı filtreleme ile Isolation Forest algoritmasını birleştiren hibrit güvenlik analizi motoru.",
+  "domains": ["Yapay Zeka", "Siber Güvenlik", "Backend"],
+  "difficulty": "Orta-İleri",
+  "target_audience": "Ham metin verilerini (Nginx/Auth logları) yapılandırılmış özniteliklere (feature) dönüştürmeyi ve makine öğrenmesi modellerini gerçek bir güvenlik/gözlemlenebilirlik (observability) boru hattına entegre etmek isteyen geliştiriciler.",
+  "why_build": "Yapay zeka ve siber güvenlik kesişiminde; her log satırını pahalı ve yavaş LLM API'lerine göndermek yerine, önce deterministik Regex ayrıştırıcı ve hafif istatistiksel anomali modeli (Isolation Forest) ile filtreleyip yalnızca kritik anomalileri LLM ile açıklatan maliyet-etkin bir mimari kurduğunuzu gösterir.",
+  "environment": {
+    "os": "Windows 11 / Linux / macOS (Python 3.11+ yerel sanal ortam)",
+    "ide": "VS Code + GitHub Copilot + SQLite/PostgreSQL Görüntüleyici",
+    "docker": "İsteğe bağlı: Log üreteci (simulator) ve analiz servisini izole çalıştırmak için Docker Compose"
+  },
+  "tech_stack_and_ai": {
+    "core_stack": ["Python 3.12", "FastAPI", "Scikit-learn (Isolation Forest)", "Pandas / NumPy", "Pydantic v2"],
+    "ai_division_of_labor": "Log ayrıştırma boru hattını, öznitelik çıkarımı (feature engineering: istek sıklığı, hata oranı, entropi) mantığını ve anomali eşik değerlerini SEN belirle; karmaşık Regex desenlerini, Scikit-learn boru hattı (Pipeline) şablonunu ve test log üretecini AI asistanına kodlat."
+  },
+  "prerequisites": [
+    "Düzenli İfadeler (Regex) ile yapılandırılmamış log satırlarından (Apache/Nginx/SSH) alan ayıklama",
+    "Temel İstatistik ve Olasılık (Z-skoru, aykırı değer kavramı, yanlış pozitif/negatif dengesi)",
+    "Python'da bellek dostu dosya okuma (generator/yield yapısı) ve vektörizasyon"
+  ],
+  "anti_patterns": [
+    "Gigabaytlarca ham log dosyasını tek seferde belleğe (RAM) yükleyerek Out-Of-Memory (OOM) çökmesine neden olmak.",
+    "Saniyede binlerce satır akan logun tamamını doğrudan bir LLM API'sine göndererek hem yüksek gecikme (latency) hem de astronomik fatura üretmek.",
+    "Modeli tekil log satırları üzerinde eğitmeye çalışmak (Anomali tek satırda değil, belirli bir zaman penceresindeki davranış özetinde aranmalıdır)."
+  ],
+  "genesis_prompt": "Rolün: Kıdemli SecOps ve Makine Öğrenmesi Sistem Mimarı.\nPython kullanarak akan (streaming) web sunucu loglarından siber saldırı ve sistem anomalilerini tespit eden 3 katmanlı 'LogPulse' motorunu tasarlıyoruz.\n\nKurallar:\n1. Hazır spagetti kod verme; sistemi (a) Generator tabanlı Log Parser, (b) Zaman pencereli Öznitelik Çıkarıcı (Feature Extractor) ve (c) Isolation Forest + LLM Açıklayıcı olarak 3 modülde kurgula.\n2. Ham log satırlarından IP bazlı 1 dakikalık pencerelerde şu öznitelikleri çıkar: toplam istek sayısı, 4xx/5xx hata oranı, benzersiz URL sayısı ve URL karakter entropisi (SQLi/XSS tespiti için).\n3. Sadece Isolation Forest modelinin anomali skoru eşiği aşan şüpheli pencereleri özetleyip güvenlik analistine sunacak veri şemasını oluştur.\n\nİlk adım olarak bu 3 katmanın veri akış şemasını ve Pydantic veri modellerini yaz, onayımı bekle.",
+  "definition_of_done": [
+    "100.000 satırlık örnek log dosyasının belleği şişirmeden (generator mimarisiyle) 5 saniyenin altında ayrıştırılıp zaman pencereli öznitelik matrisine dönüştürülmesi.",
+    "Sentetik olarak loglara enjekte edilen SQL Injection taraması ve Brute-Force saldırı pencerelerinin Isolation Forest tarafından %90 üzeri isabetle 'Anomali' olarak işaretlenmesi.",
+    "Tespit edilen anomalilerin neden şüpheli olduğunu (ör. '1 dakikada %88 401 hatası ve yüksek URL entropisi') açıklayan yapılandırılmış JSON çıktısının üretilmesi."
+  ],
+  "interview_questions": [
+    {
+      "question": "Log anomali tespitinde neden denetimli (Supervised) sınıflandırma yerine Isolation Forest gibi denetimsiz (Unsupervised) bir algoritma seçtiniz?",
+      "technical_defense": "Gerçek üretim ortamlarında etiketlenmiş saldırı verisi (ground truth) çok azdır ve sıfırıncı gün (zero-day) veya yeni tip trafik anomalileri geçmiş etiketlere uymaz. Isolation Forest, normal trafiğin dağılımını öğrenmek yerine çok boyutlu öznitelik uzayında rastgele bölmeler yaparak kolay izole edilen aykırı noktaları (anomalileri) etiket gerektirmeden ve O(n log n) gibi düşük hesaplama maliyetiyle yakalar."
+    },
+    {
+      "question": "URL entropisi (Shannon Entropy) özniteliği siber güvenlik açısından modele ne kazandırır?",
+      "technical_defense": "Normal kullanıcı istekleri '/products/laptop' gibi tahmin edilebilir ve düşük entropili dizeler içerir. Buna karşılık SQL Injection, XSS payload'ları, Base64 kodlu komut enjeksiyonları veya DGA (Domain Generation Algorithms) rastgele ve karmaşık karakter dizileri barındırır. Shannon entropisi bu rastgeleliği matematiksel bir skora dökerek modelin imza tabanlı kuralları aşan saldırıları yakalamasını sağlar."
+    }
+  ]
+}
