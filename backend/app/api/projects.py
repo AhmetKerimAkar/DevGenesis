@@ -10,6 +10,7 @@ from app.schemas.project import (
 )
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
+catalog_router = APIRouter(prefix="/catalog", tags=["Catalog"])
 
 
 @router.get(
@@ -37,7 +38,7 @@ async def list_projects(
     return projects
 
 
-@router.get(
+@catalog_router.get(
     "/filters",
     response_model=CatalogFiltersResponse,
     status_code=status.HTTP_200_OK,
@@ -45,11 +46,11 @@ async def list_projects(
 )
 async def catalog_filters(db: AsyncSession = Depends(get_db)):
     domains, difficulties, total_count = await project_crud.get_catalog_filters(db)
-    return {
-        "domains": domains,
-        "difficulties": difficulties,
-        "total_count": total_count,
-    }
+    return CatalogFiltersResponse(
+        domains=domains,
+        difficulties=difficulties,
+        total_count=total_count,
+    )
 
 
 @router.get(

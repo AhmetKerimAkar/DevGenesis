@@ -27,7 +27,7 @@ export async function fetchProjects(
 }
 
 export async function fetchCatalogFilters(): Promise<CatalogFilters> {
-  const response = await fetch(`${API_BASE_URL}/projects/filters`, {
+  const response = await fetch(`${API_BASE_URL}/catalog/filters`, {
     cache: "no-store",
   });
 

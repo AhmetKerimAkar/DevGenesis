@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.api.projects import router as projects_router
+from app.api.projects import catalog_router, router as projects_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -23,6 +23,7 @@ app.add_middleware(
 
 # Proje Router'ını /api/v1 altına bağla
 app.include_router(projects_router, prefix=settings.API_V1_STR)
+app.include_router(catalog_router, prefix=settings.API_V1_STR)
 
 
 @app.get(f"{settings.API_V1_STR}/health", tags=["System"])

@@ -43,17 +43,20 @@ async def get_projects(
 
 async def get_catalog_filters(db: AsyncSession) -> tuple[list[str], list[str], int]:
     """Katalogdaki tüm benzersiz filtre değerlerini ve toplam proje sayısını döner."""
-    values_result = await db.execute(select(Project.domains, Project.difficulty))
-    domains: set[str] = set()
-    difficulties: set[str] = set()
+    total_count_result = await db.execute(select(func.count(Project.id)))
+    difficulties_result = await db.execute(
+        select(func.distinct(Project.difficulty)).order_by(Project.difficulty.asc())
+    )
+    domain_values = func.jsonb_array_elements_text(Project.domains)
+    domains_result = await db.execute(
+        select(func.distinct(domain_values)).order_by(domain_values.asc())
+    )
 
-    for project_domains, difficulty in values_result.all():
-        domains.update(project_domains or [])
-        if difficulty:
-            difficulties.add(difficulty)
-
-    total_count = await db.scalar(select(func.count(Project.id)))
-    return sorted(domains), sorted(difficulties), int(total_count or 0)
+    return (
+        list(domains_result.scalars().all()),
+        list(difficulties_result.scalars().all()),
+        int(total_count_result.scalar_one() or 0),
+    )
 
 
 async def get_project_by_slug(db: AsyncSession, slug: str) -> Project | None:

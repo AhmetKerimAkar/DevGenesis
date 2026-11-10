@@ -18,13 +18,32 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     Object.entries({ domain, difficulty }).filter(([, value]) => value) as [string, string][]
   ).toString();
 
-  try {
-    const [projects, catalogFilters] = await Promise.all([
-      fetchProjects(domain, difficulty),
-      fetchCatalogFilters(),
-    ]);
+  const [projectsResult, filtersResult] = await Promise.allSettled([
+    fetchProjects(domain, difficulty),
+    fetchCatalogFilters(),
+  ]);
 
+  if (projectsResult.status === "rejected") {
     return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-100">Yazılım projelerini keşfet</h1>
+          <p className="mt-2 text-slate-300">Alanına ve seviyene uygun bir proje seç, mimari rehberle geliştirmeye başla.</p>
+        </header>
+        <div role="alert" className="rounded-xl border border-rose-500/40 bg-rose-950/20 p-6">
+          <h2 className="font-semibold text-rose-200">Projeler yüklenemedi</h2>
+          <p className="mt-2 text-sm text-rose-100/80">Bağlantıyı kontrol edip isteği yeniden deneyebilirsin.</p>
+          <RetryButton />
+        </div>
+      </div>
+    );
+  }
+
+  const projects = projectsResult.value;
+  const catalogFilters =
+    filtersResult.status === "fulfilled" ? filtersResult.value : null;
+
+  return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <header className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-slate-100">
@@ -36,14 +55,17 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </header>
 
         <CatalogToolbar
-          domains={catalogFilters.domains}
-          difficulties={catalogFilters.difficulties}
+          domains={catalogFilters?.domains ?? []}
+          difficulties={catalogFilters?.difficulties ?? []}
+          filtersError={!catalogFilters}
         />
 
         <div className="mt-8 flex items-center justify-between border-b border-slate-700/70 pb-3">
           <h2 className="text-xl font-semibold text-slate-100">Proje kataloğu</h2>
           <span className="text-xs text-slate-300">
-            Filtreyle eşleşen {projects.length} / {catalogFilters.total_count} proje
+            {catalogFilters
+              ? `Filtreyle eşleşen ${projects.length} / ${catalogFilters.total_count} proje`
+              : `Eşleşen: ${projects.length} proje`}
           </span>
         </div>
 
@@ -83,20 +105,5 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           </div>
         )}
       </div>
-    );
-  } catch {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-100">Yazılım projelerini keşfet</h1>
-          <p className="mt-2 text-slate-300">Alanına ve seviyene uygun bir proje seç, mimari rehberle geliştirmeye başla.</p>
-        </header>
-        <div role="alert" className="rounded-xl border border-rose-500/40 bg-rose-950/20 p-6">
-          <h2 className="font-semibold text-rose-200">Projeler yüklenemedi</h2>
-          <p className="mt-2 text-sm text-rose-100/80">Bağlantıyı kontrol edip isteği yeniden deneyebilirsin.</p>
-          <RetryButton />
-        </div>
-      </div>
-    );
-  }
+  );
 }
