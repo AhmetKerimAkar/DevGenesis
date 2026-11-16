@@ -1,185 +1,86 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  ArrowLeft,
-  Award,
-  Bot,
-  CheckCircle2,
-  Cpu,
-  HelpCircle,
-  Laptop,
-  ListChecks,
-  ShieldAlert,
-  Users,
-} from "lucide-react";
+import { ArrowLeft, ArrowDown, ArrowUpRight, ChevronDown, Unplug } from "lucide-react";
 import { fetchProjectBySlug } from "@/lib/api";
 import GenesisPromptBox from "@/components/GenesisPromptBox";
 import RetryButton from "@/components/RetryButton";
 
 interface ProjectDetailPageProps {
   params: { slug: string };
-  searchParams: { domain?: string; difficulty?: string };
+  searchParams: { domain?: string; difficulty?: string; q?: string };
 }
 
 const sections = [
-  ["hedef-kitle", "Kime hitap ediyor?"],
+  ["hedef-kitle", "Kime uygun?"],
+  ["neden-yapmalisin", "Ne kazandırır?"],
   ["ortam", "Geliştirme ortamı"],
-  ["teknoloji-yigini", "Teknoloji yığını"],
-  ["onkosullar", "Önkoşullar"],
-  ["neden-yapmalisin", "Neden yapmalısın?"],
+  ["teknoloji-yigini", "Teknoloji & iş bölümü"],
+  ["onkosullar", "Başlamadan önce"],
   ["kacinilacak-tuzaklar", "Kaçınılacak tuzaklar"],
   ["genesis-prompt", "Başlangıç promptu"],
   ["bitis-kriterleri", "Bitiş kriterleri"],
-  ["mulakat-sorulari", "Mülakat soruları"],
+  ["mulakat-sorulari", "Mülakat hazırlığı"],
 ];
 
-function TableOfContents({ mobile = false }: { mobile?: boolean }) {
-  const links = (
-    <nav aria-label="Rehber bölümleri" className="space-y-2">
-      {sections.map(([id, label]) => (
-        <Link key={id} href={`#${id}`} className="block text-sm text-slate-300 hover:text-indigo-400">
-          {label}
-        </Link>
-      ))}
-    </nav>
-  );
-
-  if (mobile) {
-    return (
-      <details className="lg:hidden mb-6 rounded-xl border border-slate-700/70 bg-slate-800/55 p-4">
-        <summary className="cursor-pointer font-semibold text-slate-100">Bu rehberde</summary>
-        <div className="mt-4">{links}</div>
-      </details>
-    );
-  }
-
-  return (
-    <div className="hidden lg:block rounded-xl border border-slate-700/70 bg-slate-800/55 p-5">
-      <h2 className="mb-4 text-sm font-bold text-slate-100">Bu rehberde</h2>
-      {links}
-    </div>
-  );
+function SectionLinks() {
+  return <nav className="toc-links" aria-label="Rehber bölümleri">{sections.map(([id, label], index) => <a key={id} href={`#${id}`}><span>{(index + 1).toString().padStart(2, "0")}</span>{label}</a>)}</nav>;
 }
 
-export default async function ProjectDetailPage({
-  params,
-  searchParams,
-}: ProjectDetailPageProps) {
+function GuideSection({ id, number, title, children, tone = "" }: { id: string; number: string; title: string; children: ReactNode; tone?: string }) {
+  return <section id={id} className={`guide-section ${tone}`}><div className="guide-section-heading"><span className="section-number">{number}</span><h2>{title}</h2></div><div className="guide-section-body">{children}</div></section>;
+}
+
+export default async function ProjectDetailPage({ params, searchParams }: ProjectDetailPageProps) {
   const query = new URLSearchParams();
   if (searchParams.domain) query.set("domain", searchParams.domain);
   if (searchParams.difficulty) query.set("difficulty", searchParams.difficulty);
-  const catalogHref = query.toString() ? `/?${query.toString()}` : "/";
+  if (searchParams.q) query.set("q", searchParams.q);
+  const catalogHref = `/${query.size ? `?${query}` : ""}#katalog`;
   let project;
-
   try {
     project = await fetchProjectBySlug(params.slug);
   } catch {
-    return (
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div role="alert" className="rounded-xl border border-rose-500/40 bg-rose-950/20 p-6">
-          <h1 className="text-2xl font-bold text-rose-200">Proje rehberi yüklenemedi</h1>
-          <p className="mt-2 text-sm leading-relaxed text-rose-100/80">
-            Proje bilgilerine şu anda ulaşılamıyor. Lütfen tekrar deneyin veya kataloğa dönün.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <RetryButton />
-            <Link href={catalogHref} className="inline-flex items-center rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-100 hover:border-indigo-400 hover:text-indigo-300">
-              Kataloğa dön
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+    return <div className="shell state-page"><div role="alert" className="empty-state"><span className="empty-icon"><Unplug size={26} aria-hidden="true" /></span><h1>Rehbere şu anda ulaşamıyoruz.</h1><p>Tekrar deneyebilir veya diğer projelere göz atabilirsin.</p><div className="state-actions"><RetryButton /><Link href={catalogHref} className="button button-secondary">Kataloğa dön <ArrowUpRight size={16} aria-hidden="true" /></Link></div></div></div>;
   }
-
   if (!project) notFound();
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div className="mb-6">
-        <Link href={catalogHref} className="inline-flex items-center gap-2 rounded-md border border-slate-700/70 bg-slate-800/55 px-3 py-1.5 text-xs text-slate-300 hover:text-indigo-400">
-          <ArrowLeft className="h-3.5 w-3.5" /> Kataloğa dön
-        </Link>
-      </div>
-
-      <header className="mb-8 border-b border-slate-700/70 pb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-100">{project.title}</h1>
-        <p className="mt-3 max-w-4xl text-base leading-relaxed text-slate-300">{project.short_description}</p>
-        <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-300">
-          <span>Alan: {project.domains.join(", ")}</span>
-          <span>Seviye: {project.difficulty}</span>
-        </div>
-        <Link href="#genesis-prompt" className="mt-5 inline-flex rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500">
-          Başlangıç promptuna git
-        </Link>
+    <div className="shell detail-page">
+      <Link href={catalogHref} className="back-link"><ArrowLeft size={16} aria-hidden="true" /> Proje kütüphanesi</Link>
+      <header className="detail-header">
+        <div className="detail-title-block"><div className="domain-tags">{project.domains.map((domain) => <span key={domain}>{domain}</span>)}</div><h1>{project.title}</h1><p>{project.short_description}</p></div>
+        <div className="detail-header-meta"><span className="difficulty"><span />{project.difficulty}</span><span className="detail-section-count">9 bölüm · Mimari rehber</span><Link href="#genesis-prompt" className="button button-primary">Başlangıç promptu <ArrowDown size={16} aria-hidden="true" /></Link></div>
       </header>
-
-      <TableOfContents mobile />
-
-      <div className="grid grid-cols-1 lg:grid-cols-[35fr_65fr] gap-8 items-start">
-        <aside className="lg:sticky lg:top-20 space-y-5">
-          <TableOfContents />
-
-          <section id="hedef-kitle" className="scroll-mt-24 rounded-xl border border-slate-700/70 bg-slate-800/55 p-5">
-            <div className="mb-2.5 flex items-center gap-2"><Users className="h-4 w-4 text-slate-400" /><h2 className="text-sm font-bold">Kime Hitap Ediyor?</h2></div>
-            <p className="text-xs leading-relaxed text-slate-300">{project.target_audience}</p>
-          </section>
-
-          <section id="ortam" className="scroll-mt-24 rounded-xl border border-slate-700/70 bg-slate-800/55 p-5">
-            <div className="mb-3 flex items-center gap-2"><Laptop className="h-4 w-4 text-slate-400" /><h2 className="text-sm font-bold">Nerede Yapmalısın? (Ortam)</h2></div>
-            <dl className="space-y-2.5 text-xs">
-              <div className="rounded-lg border border-slate-700/60 bg-[#0f1420]/90 p-2.5"><dt className="text-slate-400">İşletim Sistemi (OS)</dt><dd className="mt-0.5 text-slate-200">{project.environment.os}</dd></div>
-              <div className="rounded-lg border border-slate-700/60 bg-[#0f1420]/90 p-2.5"><dt className="text-slate-400">IDE &amp; Araçlar</dt><dd className="mt-0.5 text-slate-200">{project.environment.ide}</dd></div>
-              <div className="rounded-lg border border-slate-700/60 bg-[#0f1420]/90 p-2.5"><dt className="text-slate-400">Konteyner &amp; Altyapı</dt><dd className="mt-0.5 text-slate-200">{project.environment.docker}</dd></div>
-            </dl>
-          </section>
-
-          <section id="teknoloji-yigini" className="scroll-mt-24 rounded-xl border border-slate-700/70 bg-slate-800/55 p-5">
-            <div className="mb-3 flex items-center gap-2"><Cpu className="h-4 w-4 text-slate-400" /><h2 className="text-sm font-bold">Neleri Kullanmalısın? (Stack &amp; AI İş Bölümü)</h2></div>
-            <div className="mb-4 flex flex-wrap gap-1.5">{project.tech_stack_and_ai.core_stack.map((tech) => <span key={tech} className="rounded bg-[#0f1420]/90 px-2.5 py-1 text-[11px] text-slate-200">{tech}</span>)}</div>
-            <div className="rounded-lg border border-slate-700/60 bg-[#0f1420]/90 p-3.5">
-              <div className="mb-1.5 flex items-center gap-1.5 text-[11px] text-slate-300"><Bot className="h-3.5 w-3.5" /> İnsan ve AI iş bölümü</div>
-              <p className="text-xs leading-relaxed text-slate-300">{project.tech_stack_and_ai.ai_division_of_labor}</p>
-            </div>
-          </section>
-
-          <section id="onkosullar" className="scroll-mt-24 rounded-xl border border-slate-700/70 bg-slate-800/55 p-5">
-            <div className="mb-3 flex items-center gap-2"><ListChecks className="h-4 w-4 text-slate-400" /><h2 className="text-sm font-bold">Neyi Bilerek Başlamalısın?</h2></div>
-            <ul className="space-y-2 text-xs leading-relaxed text-slate-300">{project.prerequisites.map((prereq, index) => <li key={index}>• {prereq}</li>)}</ul>
-          </section>
-        </aside>
-
-        <div className="min-w-0 space-y-8">
-          <section id="neden-yapmalisin" className="scroll-mt-24 rounded-xl border border-slate-700/70 bg-slate-800/55 p-6">
-            <div className="mb-3 flex items-center gap-2.5"><Award className="h-5 w-5 text-slate-400" /><h2 className="text-lg font-bold">Neden Yapmalısın? (CV &amp; Mülakat Katkısı)</h2></div>
-            <p className="text-sm leading-relaxed text-slate-300">{project.why_build}</p>
-          </section>
-
-          <section id="kacinilacak-tuzaklar" className="scroll-mt-24 rounded-xl border border-amber-500/30 bg-amber-950/10 p-6">
-            <div className="mb-4 flex items-center gap-2.5"><ShieldAlert className="h-5 w-5 text-amber-400" /><h2 className="text-lg font-bold">Nereye Saplanmamalısın? (Kaçınılacak Tuzaklar)</h2></div>
-            <ul className="space-y-3">{project.anti_patterns.map((pattern, index) => <li key={index} className="rounded-lg border border-amber-500/20 bg-slate-800/55 p-3.5 text-sm leading-relaxed text-slate-300">{pattern}</li>)}</ul>
-          </section>
-
+      <details className="mobile-toc"><summary>Bu rehberde <ChevronDown size={17} aria-hidden="true" /></summary><SectionLinks /></details>
+      <div className="guide-layout">
+        <aside className="guide-sidebar"><p className="eyebrow">BU REHBERDE</p><SectionLinks /><div className="sidebar-note"><span className="status-dot" /><p>Her kararın bir nedeni var.<br />Koddan önce onu keşfet.</p></div></aside>
+        <article className="guide-content" aria-label={`${project.title} proje rehberi`}>
+          <GuideSection id="hedef-kitle" number="01" title="Bu proje kime uygun?"><p>{project.target_audience}</p></GuideSection>
+          <GuideSection id="neden-yapmalisin" number="02" title="Bu projeden ne kazanırsın?"><p>{project.why_build}</p></GuideSection>
+          <GuideSection id="ortam" number="03" title="Çalışma ortamını hazırla">
+            <dl className="environment-list">{[["İşletim sistemi", project.environment.os], ["Editör & araçlar", project.environment.ide], ["Konteyner & altyapı", project.environment.docker]].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+          </GuideSection>
+          <GuideSection id="teknoloji-yigini" number="04" title="Teknoloji ve iş bölümü">
+            <div className="tech-tags">{project.tech_stack_and_ai.core_stack.map((tech) => <span key={tech}>{tech}</span>)}</div>
+            <div className="editorial-note"><h3>Sen ve yapay zekâ</h3><p>{project.tech_stack_and_ai.ai_division_of_labor}</p></div>
+          </GuideSection>
+          <GuideSection id="onkosullar" number="05" title="Başlamadan önce">
+            <ul className="clean-list">{project.prerequisites.map((prerequisite, index) => <li key={index}>{prerequisite}</li>)}</ul>
+          </GuideSection>
+          <GuideSection id="kacinilacak-tuzaklar" number="06" title="Bu tuzaklara dikkat et" tone="caution-section">
+            <ul className="clean-list">{project.anti_patterns.map((pattern, index) => <li key={index}>{pattern}</li>)}</ul>
+          </GuideSection>
           <GenesisPromptBox prompt={project.genesis_prompt} projectTitle={project.title} />
-
-          <section id="bitis-kriterleri" className="scroll-mt-24 rounded-xl border border-slate-700/70 bg-slate-800/55 p-6">
-            <div className="mb-4 flex items-center gap-2.5"><CheckCircle2 className="h-5 w-5 text-slate-400" /><h2 className="text-lg font-bold">Projenin Bittiğini Nasıl Anlarsın?</h2></div>
-            <div className="space-y-3">{project.definition_of_done.map((criterion, index) => <div key={index} className="flex items-start gap-3.5 rounded-lg border border-slate-700/60 bg-[#0f1420]/90 p-4 text-sm text-slate-200"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-700 text-xs">{index + 1}</span><span>{criterion}</span></div>)}</div>
-          </section>
-
-          <section id="mulakat-sorulari" className="scroll-mt-24 rounded-xl border border-slate-700/70 bg-slate-800/55 p-6">
-            <div className="mb-5 flex items-center gap-2.5"><HelpCircle className="h-5 w-5 text-slate-400" /><h2 className="text-lg font-bold">Mülakatta Ne Sorulur?</h2></div>
-            <div className="space-y-5">{project.interview_questions.map((iq, index) => (
-              <div key={index} className="rounded-lg border border-slate-700/70 bg-[#0f1420]/90 p-5">
-                <h3 className="text-sm font-semibold leading-snug text-slate-100">{index + 1}. {iq.question}</h3>
-                <details className="group mt-3">
-                  <summary className="cursor-pointer text-xs font-medium text-indigo-400 hover:text-indigo-300 select-none">Teknik savunmayı göster</summary>
-                  <p className="mt-3 border-l-2 border-slate-600 pl-3 text-sm leading-relaxed text-slate-300">{iq.technical_defense}</p>
-                </details>
-              </div>
-            ))}</div>
-          </section>
-        </div>
+          <GuideSection id="bitis-kriterleri" number="08" title="Ne zaman tamamlanmış sayılır?">
+            <ol className="criteria-list">{project.definition_of_done.map((criterion, index) => <li key={index}><span>{(index + 1).toString().padStart(2, "0")}</span><p>{criterion}</p></li>)}</ol>
+          </GuideSection>
+          <GuideSection id="mulakat-sorulari" number="09" title="Yaptığın işi anlatabilmek">
+            <p className="section-intro">Önce kendi cevabını düşün. Ardından teknik açıklamayla karşılaştır.</p>
+            <div className="interview-list">{project.interview_questions.map((item, index) => <details key={index}><summary><span className="question-number">{index + 1}.</span><span>{item.question}</span><ChevronDown size={17} aria-hidden="true" /></summary><div className="interview-answer"><span className="eyebrow">TEKNİK AÇIKLAMA</span><p>{item.technical_defense}</p></div></details>)}</div>
+          </GuideSection>
+          <div className="guide-end"><span>Bir sonraki adım sana ait.</span><Link href={catalogHref} className="text-link">Diğer projeleri keşfet <ArrowUpRight size={16} aria-hidden="true" /></Link></div>
+        </article>
       </div>
     </div>
   );
